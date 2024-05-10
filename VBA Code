@@ -1,0 +1,96 @@
+Sub stocks()
+    Dim ws As Worksheet
+    Dim tickername As String
+    Dim lastrow As Long
+    Dim summary_table_row As Long
+    Dim openprice As Double
+    Dim closeprice As Double
+    Dim opendate As Date
+    Dim closedate As Date
+    Dim quarterlychange As Double
+    Dim percentchange As Double
+    Dim totalvolume As Long
+    
+    ' Loop through each worksheet
+    For Each ws In Worksheets
+        ' Label columns K, L, M, N
+        ws.Range("K1").Value = "Ticker"
+        ws.Range("L1").Value = "Quarterly Change"
+        ws.Range("M1").Value = "Percent Change"
+        ws.Range("N1").Value = "Total Volume"
+        
+        ' Find the last row for tickers
+        lastrow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+
+        ' Initialize summary_table_row
+        summary_table_row = 2
+        
+        ' Loop through each row
+        For i = 2 To lastrow
+            ' Get the current ticker name
+            tickername = ws.Cells(i, 1).Value
+            
+            ' Check if we are still within the same ticker or if it's the last row
+            If ws.Cells(i + 1, 1).Value <> tickername Or i = lastrow Then
+                ' Set the new ticker name in the summary table
+                ws.Cells(summary_table_row, 11).Value = tickername
+
+                ' Find the open price and close price for the current ticker
+                opendate = Application.WorksheetFunction.Min(ws.Range("B2:B" & lastrow))
+                closedate = Application.WorksheetFunction.Max(ws.Range("B2:B" & lastrow))
+                
+                ' Find the open price corresponding to the start date of the quarter
+                openprice = 0
+                For j = i To 2 Step -1
+                    If ws.Cells(j, 2).Value <= opendate Then
+                        openprice = ws.Cells(j, 3).Value
+                        Exit For
+                    End If
+                Next j
+
+                ' Find the close price corresponding to the end date of the quarter
+                closeprice = 0
+                For j = i To 2 Step -1
+                    If ws.Cells(j, 2).Value <= closedate Then
+                        closeprice = ws.Cells(j, 3).Value
+                        Exit For
+                    End If
+                Next j
+
+                ' Calculate the quarterly change, percent change, and total volume for the current ticker
+                quarterlychange = closeprice - openprice
+                If openprice <> 0 Then
+                    percentchange = (closeprice - openprice) / openprice * 100
+                Else
+                    percentchange = 0
+                End If
+               'Rotal volume for the current ticker
+                totalvolume = 0
+
+                ' Loop through each row to sum the volume for the current ticker
+                'totalvolume = totalvolume + ws.Cells(j, 7).Value
+                    
+                ' Update quarterly change, percent change, and total volume in summary table
+                ws.Cells(summary_table_row, 12).Value = quarterlychange
+                ws.Cells(summary_table_row, 13).Value = percentchange
+                ws.Cells(summary_table_row, 13).NumberFormat = "0.00%"
+                ws.Cells(summary_table_row, 14).Value = totalvolume
+
+                ' Move to the next summary table row
+                summary_table_row = summary_table_row + 1
+            End If
+        Next i
+        
+        'Format colors
+                For i = 2 To lastrow
+                If Cells(i, 13).Value > 0 Then
+                Cells(i, 13).Interior.ColorIndex = 4
+                ElseIf Cells(i, 13).Value = 0 Then
+                Cells(i, 13).Interior.ColorIndex = 6
+                ElseIf Cells(i, 13).Value < 0 Then
+                Cells(i, 13).Interior.ColorIndex = 3
+    End If
+Next i
+
+    Next ws
+End Sub
